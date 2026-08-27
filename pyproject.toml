@@ -1,0 +1,35 @@
+[project]
+name = "mcp-long-term-memory"
+version = "0.1.0"
+description = "MCP long-term memory service backed by MySQL and Milvus"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "cryptography>=45,<47",
+    "fastapi>=0.116,<1",
+    "mcp[cli]>=1.27,<2",
+    "pydantic-settings>=2.10,<3",
+    "pymilvus==3.0.1",
+    "pymysql>=1.1,<2",
+    "python-dotenv>=1.1,<2",
+    "sentence-transformers>=5,<6",
+    "sqlalchemy>=2.0,<3",
+    "uvicorn[standard]>=0.35,<1",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1",
+    "pytest>=8,<10",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
