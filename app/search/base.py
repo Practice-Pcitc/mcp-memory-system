@@ -1,13 +1,13 @@
-"""Vector store contract shared by production and test implementations."""
+"""Keyword search contract shared by Elasticsearch and tests."""
 
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 
-from app.vector.milvus_store import VectorHit
+from app.vector import VectorHit
 
 
-class VectorStore(Protocol):
-    def ensure_collection(self) -> None: ...
+class KeywordStore(Protocol):
+    def ensure_index(self) -> None: ...
 
     def upsert(
         self,
@@ -15,18 +15,22 @@ class VectorStore(Protocol):
         user_id: str,
         conversation_id: str | None,
         project_path: str | None,
+        content: str,
+        tags: list[str],
+        metadata: dict[str, Any],
         created_at: datetime,
-        vector: list[float],
+        updated_at: datetime,
     ) -> None: ...
 
     def search(
         self,
-        vector: list[float],
+        query: str,
         user_id: str,
         top_k: int,
         conversation_id: str | None = None,
         project_path: str | None = None,
         include_global: bool = True,
+        tags: list[str] | None = None,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
     ) -> list[VectorHit]: ...

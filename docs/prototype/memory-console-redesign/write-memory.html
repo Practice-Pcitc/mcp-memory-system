@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- 生成工具：pg-ui-structure-html V1.6 | 生成时间：2026-08-28 -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>写入记忆 · MCP 长期记忆系统</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="index.html"><span class="brand-mark">M</span><span><strong>Memory</strong><small>MCP LONG-TERM MEMORY</small></span></a>
+      <nav class="sidebar-navigation" aria-label="主导航">
+        <p class="nav-caption">工作台</p>
+        <a class="nav-item" href="index.html"><span>⌂</span>记忆中心</a>
+        <a class="nav-item" href="index.html#memory-list"><span>▤</span>全部记忆</a>
+        <p class="nav-caption">管理</p>
+        <a class="nav-item active" href="write-memory.html"><span>＋</span>写入记忆</a>
+      </nav>
+      <div class="connection-card"><span class="status-dot"></span><div><strong>服务运行正常</strong><small>MySQL · Milvus · ES</small></div></div>
+    </aside>
+
+    <main class="workspace narrow-workspace">
+      <header class="top-bar">
+        <button class="icon-button mobile-only" id="menuButton" aria-label="打开导航">☰</button>
+        <div><p class="eyebrow">NEW MEMORY</p><h1>写入记忆</h1><p>内容将写入 MySQL，并根据检索方式建立向量和关键词索引。</p></div>
+        <a class="secondary-action" href="index.html">← 返回记忆中心</a>
+      </header>
+
+      <form class="editor-card" id="memoryForm">
+        <section class="form-section">
+          <div class="form-heading"><span>01</span><div><h2>记忆内容</h2><p>填写需要在后续对话中召回的关键事实。</p></div></div>
+          <label>内容 <span class="required">必填</span>
+            <textarea id="contentField" rows="8" placeholder="例如：我平时使用 Python 和 Vue3 开发项目。" required></textarea>
+          </label>
+          <div class="character-count"><span>建议只保存稳定、可复用的信息</span><span id="charCount">0 / 10000</span></div>
+        </section>
+
+        <section class="form-section">
+          <div class="form-heading"><span>02</span><div><h2>记忆范围</h2><p>留空项目路径表示全局记忆；填写绝对路径表示项目记忆。</p></div></div>
+          <div class="scope-choice" role="radiogroup" aria-label="记忆范围">
+            <label class="choice-card selected"><input type="radio" name="scope" value="global" checked><span>◎</span><div><strong>全局记忆</strong><small>所有项目均可召回</small></div></label>
+            <label class="choice-card"><input type="radio" name="scope" value="project"><span>◇</span><div><strong>项目记忆</strong><small>仅指定项目内召回</small></div></label>
+          </div>
+          <label id="projectPathField" hidden>项目路径 <span class="required">绝对路径</span><input placeholder="例如：D:\work\memory-system"></label>
+        </section>
+
+        <section class="form-section">
+          <div class="form-heading"><span>03</span><div><h2>补充信息</h2><p>会话和标签用于进一步筛选记忆。</p></div></div>
+          <div class="two-column-form">
+            <label>用户 ID<input value="demo-user" required></label>
+            <label>会话 ID（可选）<input value="mcp-manual-001"></label>
+          </div>
+          <label>标签（逗号分隔）<input value="MCP, 测试" placeholder="例如：偏好, 技术"></label>
+        </section>
+
+        <footer class="form-actions"><a class="secondary-action" href="index.html">取消</a><button class="primary-action" type="submit">保存记忆</button></footer>
+      </form>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" hidden>记忆已保存（原型演示）</div>
+  <script src="prototype.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 .env
+frontend/.env.local
 dist/
 node_modules/
 frontend/dist/

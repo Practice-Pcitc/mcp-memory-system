@@ -54,6 +54,8 @@ def list_memories(
     tags: list[str] | None = Query(default=None),
     start_time: datetime | None = Query(default=None),
     end_time: datetime | None = Query(default=None),
+    project_path: str | None = Query(default=None, max_length=1024),
+    include_global: bool = Query(default=True),
     service: MemoryService = Depends(get_memory_service),
 ) -> MemoryList:
     return service.list_memories(
@@ -64,6 +66,8 @@ def list_memories(
         tags=tags,
         start_time=start_time,
         end_time=end_time,
+        project_path=project_path,
+        include_global=include_global,
     )
 
 
@@ -93,4 +97,3 @@ def delete_memory(
     service: MemoryService = Depends(get_memory_service),
 ) -> DeleteMemoryResult:
     return service.delete_memory(memory_id, user_id)
-

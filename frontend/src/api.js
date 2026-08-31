@@ -25,6 +25,8 @@ export function listMemories(filters) {
   if (filters.conversationId) {
     params.set("conversation_id", filters.conversationId);
   }
+  if (filters.projectPath) params.set("project_path", filters.projectPath);
+  params.set("include_global", String(filters.includeGlobal !== false));
   for (const tag of filters.tags || []) {
     params.append("tags", tag);
   }
@@ -59,4 +61,3 @@ export function deleteMemory(memoryId, userId) {
     method: "DELETE",
   });
 }
-

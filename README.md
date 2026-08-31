@@ -137,9 +137,52 @@ MCP 使用 stdio 传输。客户端配置示例：
 
 暴露的必需工具：
 
-- `write_memory(content, user_id, conversation_id?, tags?, metadata?)`
-- `search_memory(query, user_id, top_k?, conversation_id?, tags?, start_time?, end_time?)`
+- `write_memory(content, user_id, conversation_id?, project_path?, tags?, metadata?)`
+- `search_memory(query, user_id, top_k?, conversation_id?, project_path?, include_global?, tags?, start_time?, end_time?)`
 - `delete_memory(memory_id, user_id)`
+
+扩展工具：
+
+- `get_memory(memory_id, user_id)`
+- `list_memories(user_id, project_path?, include_global?, conversation_id?, tags?)`
+- `update_memory(memory_id, user_id, content?, tags?, metadata?, project_path?, make_global?)`
+
+### 全局记忆与项目记忆
+
+- `project_path` 留空：写入全局记忆；检索时只查询全局记忆。
+- `project_path` 填绝对路径：写入项目记忆；检索时默认返回“该项目 + 全局记忆”。
+- 项目检索传 `include_global=false`：只返回该项目的记忆。
+- Windows 路径会自动规范化，例如 `D:\\Work\\Demo` 保存为 `d:/work/demo`。
+
+### Elasticsearch 倒排索引
+
+项目内已提供 Elasticsearch 9.5.1 单节点开发 Compose：
+
+```powershell
+cd "D:\新建文件夹\OneDrive\文档\ChatGPT\docker\memory-system"
+docker compose -f docker-compose.elasticsearch.yml up -d
+docker compose -f docker-compose.elasticsearch.yml ps
+```
+
+确认 `http://127.0.0.1:9200` 可访问后，在 `memory-system/.env` 中启用：
+
+```dotenv
+ELASTICSEARCH_ENABLED=true
+ELASTICSEARCH_URL=http://127.0.0.1:9200
+ELASTICSEARCH_INDEX=memory_documents
+```
+
+重启后端，并把既有 MySQL 记忆补建倒排索引：
+
+```powershell
+uv run python -m scripts.reindex_elasticsearch
+```
+
+`search_memory` 的 `search_mode` 支持：
+
+- `semantic`：Milvus 向量搜索，默认模式。
+- `keyword`：Elasticsearch 关键词搜索。
+- `hybrid`：合并 Milvus 与 Elasticsearch 结果并使用 RRF 排序。
 
 ## 6. 测试与验证
 

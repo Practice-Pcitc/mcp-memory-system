@@ -23,10 +23,12 @@ def test_memory_api_crud_and_search(memory_service: MemoryService) -> None:
                 "conversation_id": "api-conversation",
                 "content": "API 用户喜欢 MCP",
                 "tags": ["mcp"],
+                "project_path": "D:\\Work\\Memory-System",
             },
         )
         assert created.status_code == 201
         memory_id = created.json()["id"]
+        assert created.json()["project_path"] == "d:/work/memory-system"
 
         searched = client.post(
             "/api/memories/search",
@@ -34,6 +36,8 @@ def test_memory_api_crud_and_search(memory_service: MemoryService) -> None:
                 "user_id": "api-user",
                 "query": "API 用户喜欢 MCP",
                 "top_k": 5,
+                "project_path": "D:\\Work\\Memory-System",
+                "include_global": True,
             },
         )
         assert searched.status_code == 200
@@ -46,7 +50,9 @@ def test_memory_api_crud_and_search(memory_service: MemoryService) -> None:
         assert updated.status_code == 200
         assert updated.json()["content"].endswith("Milvus")
 
-        listed = client.get("/api/memories?user_id=api-user")
+        listed = client.get(
+            "/api/memories?user_id=api-user&project_path=D%3A%5CWork%5CMemory-System"
+        )
         assert listed.status_code == 200
         assert listed.json()["total"] == 1
 
@@ -60,4 +66,3 @@ def test_memory_api_crud_and_search(memory_service: MemoryService) -> None:
             f"/api/memories/{memory_id}?user_id=api-user"
         )
         assert missing.status_code == 404
-

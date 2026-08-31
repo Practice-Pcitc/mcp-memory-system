@@ -38,6 +38,19 @@ class MilvusVectorStore:
 
     def ensure_collection(self) -> None:
         if self.client.has_collection(collection_name=self.collection_name):
+            description = self.client.describe_collection(
+                collection_name=self.collection_name
+            )
+            fields = {field["name"] for field in description.get("fields", [])}
+            if "project_path" not in fields:
+                self.client.add_collection_field(
+                    collection_name=self.collection_name,
+                    field_name="project_path",
+                    data_type=DataType.VARCHAR,
+                    nullable=True,
+                    default_value="",
+                    max_length=1024,
+                )
             return
 
         schema = MilvusClient.create_schema(auto_id=False, enable_dynamic_field=False)
@@ -56,6 +69,11 @@ class MilvusVectorStore:
             field_name="conversation_id",
             datatype=DataType.VARCHAR,
             max_length=128,
+        )
+        schema.add_field(
+            field_name="project_path",
+            datatype=DataType.VARCHAR,
+            max_length=1024,
         )
         schema.add_field(field_name="created_at", datatype=DataType.INT64)
         schema.add_field(
@@ -81,6 +99,7 @@ class MilvusVectorStore:
         memory_id: str,
         user_id: str,
         conversation_id: str | None,
+        project_path: str | None,
         created_at: datetime,
         vector: list[float],
     ) -> None:
@@ -96,6 +115,7 @@ class MilvusVectorStore:
                     "id": memory_id,
                     "user_id": user_id,
                     "conversation_id": conversation_id or "",
+                    "project_path": project_path or "",
                     "created_at": timestamp,
                     "vector": vector,
                 }
@@ -109,6 +129,8 @@ class MilvusVectorStore:
         user_id: str,
         top_k: int,
         conversation_id: str | None = None,
+        project_path: str | None = None,
+        include_global: bool = True,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
     ) -> list[VectorHit]:
@@ -116,6 +138,16 @@ class MilvusVectorStore:
         if conversation_id:
             escaped_conversation = _escape_filter_value(conversation_id)
             expressions.append(f'conversation_id == "{escaped_conversation}"')
+        if project_path is None:
+            expressions.append('project_path == ""')
+        else:
+            escaped_project = _escape_filter_value(project_path)
+            if include_global:
+                expressions.append(
+                    f'(project_path == "{escaped_project}" or project_path == "")'
+                )
+            else:
+                expressions.append(f'project_path == "{escaped_project}"')
         if start_time:
             start_ms = _utc_millis(start_time)
             expressions.append(f"created_at >= {start_ms}")

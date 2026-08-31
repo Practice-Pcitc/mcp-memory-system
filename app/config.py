@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     milvus_uri: str = "http://127.0.0.1:19530"
     milvus_collection: str = "memory_embeddings"
 
+    elasticsearch_enabled: bool = False
+    elasticsearch_url: str = "http://127.0.0.1:9200"
+    elasticsearch_index: str = "memory_documents"
+
     embedding_provider: str = "sentence_transformers"
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
     embedding_dimension: int = 512

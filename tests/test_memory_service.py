@@ -8,7 +8,7 @@ from app.db.models import Memory
 from app.embeddings import HashEmbeddingProvider
 from app.schemas import MemoryCreate, MemorySearch, MemoryUpdate
 from app.services import MemoryNotFoundError, MemoryService
-from tests.fakes import FailingVectorStore, FakeVectorStore
+from tests.fakes import FailingVectorStore, FakeKeywordStore, FakeVectorStore
 
 
 def test_write_search_and_user_isolation(memory_service: MemoryService) -> None:
@@ -101,3 +101,104 @@ def test_cross_user_access_is_rejected(memory_service: MemoryService) -> None:
     with pytest.raises(MemoryNotFoundError):
         memory_service.get_memory(created.id, "other-user")
 
+
+def test_global_and_project_memory_scopes(memory_service: MemoryService) -> None:
+    global_memory = memory_service.write_memory(
+        MemoryCreate(user_id="user-a", content="全局偏好", project_path=None)
+    )
+    project_a = memory_service.write_memory(
+        MemoryCreate(
+            user_id="user-a",
+            content="项目 A 约定",
+            project_path="D:\\Work\\Project-A\\",
+        )
+    )
+    project_b = memory_service.write_memory(
+        MemoryCreate(
+            user_id="user-a",
+            content="项目 B 约定",
+            project_path=r"D:\Work\Project-B",
+        )
+    )
+
+    assert project_a.project_path == "d:/work/project-a"
+
+    global_results = memory_service.search_memory(
+        MemorySearch(user_id="user-a", query="约定和偏好", top_k=10)
+    )
+    assert {item.id for item in global_results} == {global_memory.id}
+
+    project_results = memory_service.search_memory(
+        MemorySearch(
+            user_id="user-a",
+            query="约定和偏好",
+            top_k=10,
+            project_path=r"D:\Work\Project-A",
+        )
+    )
+    assert {item.id for item in project_results} == {global_memory.id, project_a.id}
+    assert project_b.id not in {item.id for item in project_results}
+
+    project_only = memory_service.list_memories(
+        "user-a",
+        project_path=r"D:\Work\Project-A",
+        include_global=False,
+    )
+    assert [item.id for item in project_only.items] == [project_a.id]
+
+    moved = memory_service.update_memory(
+        global_memory.id,
+        "user-a",
+        MemoryUpdate(project_path=r"D:\Work\Project-A"),
+    )
+    assert moved.project_path == "d:/work/project-a"
+
+
+def test_keyword_and_hybrid_search_lifecycle(
+    session_factory: sessionmaker[Session],
+    fake_vector_store: FakeVectorStore,
+) -> None:
+    keyword_store = FakeKeywordStore()
+    service = MemoryService(
+        session_factory,
+        HashEmbeddingProvider(64),
+        fake_vector_store,
+        keyword_store,
+    )
+    created = service.write_memory(
+        MemoryCreate(
+            user_id="user-a",
+            content="Elasticsearch 提供倒排索引",
+            project_path=r"D:\Work\Project-A",
+            tags=["search"],
+        )
+    )
+
+    keyword_results = service.search_memory(
+        MemorySearch(
+            user_id="user-a",
+            query="Elasticsearch",
+            search_mode="keyword",
+            project_path=r"D:\Work\Project-A",
+        )
+    )
+    hybrid_results = service.search_memory(
+        MemorySearch(
+            user_id="user-a",
+            query="Elasticsearch",
+            search_mode="hybrid",
+            project_path=r"D:\Work\Project-A",
+        )
+    )
+    assert [item.id for item in keyword_results] == [created.id]
+    assert [item.id for item in hybrid_results] == [created.id]
+
+    service.update_memory(
+        created.id,
+        "user-a",
+        MemoryUpdate(content="关键词检索已更新"),
+    )
+    assert keyword_store.records[created.id]["content"] == "关键词检索已更新"
+
+    service.delete_memory(created.id, "user-a")
+    assert created.id not in keyword_store.records
